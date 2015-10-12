@@ -38,6 +38,8 @@
 
 #include <QtWidgets>
 #include <QGLWidget>
+#include <QOpenGLWidget>  //Это теперь пишем вместо QtWidgets
+#include <QSurfaceFormat> //Это теперь пишем вместо QGLFormat
 
 class GraphicsView : public QGraphicsView
 {
@@ -57,6 +59,8 @@ protected:
     }
 };
 
+/// Секция в которой определяем наличие всех необходимых нам расширений OpenGL
+///
 inline bool matchString(const char *extensionString, const char *subString)
 {
     int subStringLength = strlen(subString);
@@ -91,10 +95,17 @@ bool necessaryExtensionsSupported()
     }
     return (extensions == 15);
 }
+///
+/// конец секции определения наличия расширений
 
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+
+    //**************************
+    /// Определяем версию OpenGL
+    /// Если всё плохо, выходим
+    //**************************
 
     if ((QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_1_5) == 0) {
         QMessageBox::critical(0, "OpenGL features missing",
@@ -103,8 +114,16 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    // Создаём виджет, на котором будем рисовать
     int maxTextureSize = 1024;
-    QGLWidget *widget = new QGLWidget(QGLFormat(QGL::SampleBuffers));
+    //**** старое
+    QGLWidget *widget = new QGLWidget(QGLFormat(QGL::SampleBuffers)); /// старое в мусор
+    /*//**** новое
+    // QOpenGLWidget ВСЕГДА отрисовывает в буфере, поэтому надо использовать буфер
+    QOpenGLWidget *widget = new QOpenGLWidget(0);  // пишем на новом классе
+    QSurfaceFormat format;
+    //*/
+    //**** енд старое новое
     widget->makeCurrent();
 
     if (!necessaryExtensionsSupported()) {
@@ -124,10 +143,10 @@ int main(int argc, char **argv)
         return -3;
     }
 
-    // TODO: Make conditional for final release
+    /*// TODO: Make conditional for final release
     QMessageBox::information(0, "For your information",
         "This demo can be GPU and CPU intensive and may\n"
-        "work poorly or not at all on your system.");
+        "work poorly or not at all on your system.");//*/
 
     widget->makeCurrent(); // The current context must be set before calling Scene's constructor
     Scene scene(1024, 768, maxTextureSize);

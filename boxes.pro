@@ -10,7 +10,7 @@ HEADERS += 3rdparty/fbm.h \
            roundedbox.h \
            scene.h \
            trackball.h \
-    dialogbox1.h
+    dialogboxes.h
 SOURCES += 3rdparty/fbm.c \
            glbuffers.cpp \
            glextensions.cpp \
@@ -19,7 +19,7 @@ SOURCES += 3rdparty/fbm.c \
            roundedbox.cpp \
            scene.cpp \
            trackball.cpp \
-    dialogbox1.cpp
+    dialogboxes.cpp
 
 RESOURCES += boxes.qrc
 

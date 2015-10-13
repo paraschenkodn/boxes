@@ -39,34 +39,50 @@
 //                                  TrackBall                                 //
 //============================================================================//
 
-TrackBall::TrackBall(TrackMode mode)
+/// Заметки
+/// Кватернионы расширяют концепцию поворота в трех направлениях до концепции поворота в четырех направлениях.
+/// Кватернионы можно использовать для поворота объекта вокруг вектора (x, y, z) на угол theta,
+/// где w = cos(theta/2). С точки зрения вычислений операции с кватернионами более эффективны, чем операции умножения матриц 4 × 4,
+/// используемые для преобразований и поворотов.
+/// Кватернион представляет также наиболее эффективный поворот для интерполяции между двумя ориентациями объекта.
+/// Кватернионы добавляют четвертый элемент к значениям [x, y, z], определяющим вектор, в результате чего получаются произвольные 4-мерные вектора.
+/// Однако следующие формулы показывают, как каждый элемент единичного кватерниона связан с поворотом на угол относительно оси,
+/// где q представляет единичный кватернион (x, y, z, w), ось нормализована и theta — желаемый поворот против часовой стрелки вокруг этой оси.
+/// q.x = sin(theta/2) * axis.x
+/// q.y = sin(theta/2) * axis.y
+/// q.z = sin(theta/2) * axis.z
+/// q.w = cos(theta/2)
+
+TrackBall::TrackBall(TrackMode mode)  // создаём орбиту по умолчанию (угловая скорость, ось, модель вращения)
     : m_angularVelocity(0)
     , m_paused(false)
     , m_pressed(false)
     , m_mode(mode)
 {
-    m_axis = QVector3D(0, 1, 0);
-    m_rotation = QQuaternion();
-    m_lastTime = QTime::currentTime();
+    m_axis = QVector3D(0, 1, 0);            // вектор вращения вдоль оси Y
+    m_rotation = QQuaternion();             // создаём квартернион вращения
+    m_lastTime = QTime::currentTime();      // зафиксируем текущее время (для вычислений с угловой скоростью)
 }
 
+// создаём орбиту объекта (угловая скорость, ось, модель вращения)
 TrackBall::TrackBall(float angularVelocity, const QVector3D& axis, TrackMode mode)
     : m_axis(axis)
     , m_angularVelocity(angularVelocity)
     , m_paused(false)
     , m_pressed(false)
-    , m_mode(mode)
+    , m_mode(mode)                          // задаём модель вращения
 {
-    m_rotation = QQuaternion();
-    m_lastTime = QTime::currentTime();
+    m_rotation = QQuaternion();             // создаём квартернион вращения
+    m_lastTime = QTime::currentTime();      // зафиксируем текущее время (для вычислений с угловой скоростью)
 }
 
+// Эта функция ....
 void TrackBall::push(const QPointF& p, const QQuaternion &)
 {
-    m_rotation = rotation();
-    m_pressed = true;
-    m_lastTime = QTime::currentTime();
-    m_lastPos = p;
+    m_rotation = rotation();            // запоминаем текущее значение поворота
+    m_pressed = true;                   // ВЗВОДИМ флаг нажатия клавиш мыши
+    m_lastTime = QTime::currentTime();  // запоминаем время когда запомнили текущий поворот (здесь возникает лаг с currentTime так как прошло время машшинной обработки команд и currentTime в функции rotation() != m_lastTime)
+    m_lastPos = p;                      //
     m_angularVelocity = 0.0f;
 }
 
@@ -141,13 +157,14 @@ void TrackBall::stop()
     m_paused = true;
 }
 
+// функция возвращает итоговый квартерион (поворот за прошедшее время с учётом бывшего поворота)
 QQuaternion TrackBall::rotation() const
 {
     if (m_paused || m_pressed)
         return m_rotation;
 
-    QTime currentTime = QTime::currentTime();
-    float angle = m_angularVelocity * m_lastTime.msecsTo(currentTime);
-    return QQuaternion::fromAxisAndAngle(m_axis, angle) * m_rotation;
+    QTime currentTime = QTime::currentTime();                           // получаем текущее время
+    float angle = m_angularVelocity * m_lastTime.msecsTo(currentTime);  // вычисляем угол поворота от прошлого отсчёта времени (на сколько уже повернулся объект)
+    return QQuaternion::fromAxisAndAngle(m_axis, angle) * m_rotation;   // возвращает нормализированный квартернион соответствующий повороту вокруг оси m_axis на угол поворота angle c учётом предыдущего поворота
 }
 

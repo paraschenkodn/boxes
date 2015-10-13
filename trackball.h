@@ -47,9 +47,9 @@ public:
         Plane,
         Sphere,
     };
-    TrackBall(TrackMode mode = Sphere);
-    TrackBall(float angularVelocity, const QVector3D& axis, TrackMode mode = Sphere);
-    // coordinates in [-1,1]x[-1,1]
+    TrackBall(TrackMode mode = Sphere);                                                 //создаём орбиту для объекта по умоланию
+    TrackBall(float angularVelocity, const QVector3D& axis, TrackMode mode = Sphere);   //создаём орбиту для объекта (угловая скорость, ось, модель вращения)
+    // coordinates in [-1,1]x[-1,1]   // для операций используются нормализованые вектора (приведённые к радиусу единичной сферы ??)
     void push(const QPointF& p, const QQuaternion &transformation);
     void move(const QPointF& p, const QQuaternion &transformation);
     void release(const QPointF& p, const QQuaternion &transformation);
@@ -57,9 +57,9 @@ public:
     void stop(); // stops clock
     QQuaternion rotation() const;
 private:
-    QQuaternion m_rotation;
-    QVector3D m_axis;
-    float m_angularVelocity;
+    QQuaternion m_rotation;     // квартерион вращения
+    QVector3D m_axis;           // ось вращения
+    float m_angularVelocity;    // угловая скорость вращения
 
     QPointF m_lastPos;
     QTime m_lastTime;

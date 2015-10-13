@@ -63,44 +63,44 @@ public:
     virtual void drawBackground(QPainter *painter, const QRectF &rect) Q_DECL_OVERRIDE;
 
 public slots:
-    void setShader(int index);
-    void setTexture(int index);
-    void toggleDynamicCubemap(int state);
-    void setColorParameter(const QString &name, QRgb color);
-    void setFloatParameter(const QString &name, float value);
-    void newItem(ItemDialog::ItemType type);
+    void setShader(int index);                  // функция установки шейдеров на центральный куб, в параметрах индекс шейдера
+    void setTexture(int index);                 // функция установки тестур на центральный куб, в параметрах индекс текстуры
+    void toggleDynamicCubemap(int state);                           // установка динамических текстур для объектов (включает отражение других объектов)
+    void setColorParameter(const QString &name, QRgb color);        // установка цвета объетов, в параметрах - ??????
+    void setFloatParameter(const QString &name, float value);       // установка цвета объетов, в параметрах - ??????
+    void newItem(ItemDialog::ItemType type);                    // рисуем статические объекты
 protected:
-    void renderBoxes(const QMatrix4x4 &view, int excludeBox = -2);
-    void setStates();
-    void setLights();
-    void defaultStates();
-    void renderCubemaps();
+    void renderBoxes(const QMatrix4x4 &view, int excludeBox = -2);      // рисуем круг из боксов (??)
+    void setStates();                                               //
+    void setLights();                                               //
+    void defaultStates();                                           //
+    void renderCubemaps();                                          //
 
-    virtual void mousePressEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;
-    virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;
-    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;
-    virtual void wheelEvent(QGraphicsSceneWheelEvent * event) Q_DECL_OVERRIDE;
+    virtual void mousePressEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;      // работка с мышью, переопределяем функции обработки сообщений мыши (нажатие кнопок)
+    virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;    // переопределяем функции обработки сообщений мыши (отпускание кнопки)
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;       // переопределяем функции обработки сообщений мыши (перемещение)
+    virtual void wheelEvent(QGraphicsSceneWheelEvent * event) Q_DECL_OVERRIDE;          // переопределяем функции обработки сообщений мыши (колесо)
 private:
-    void initGL();
-    QPointF pixelPosToViewPos(const QPointF& p);
+    void initGL();                                      // инициализация OpenGL
+    QPointF pixelPosToViewPos(const QPointF& p);        //
 
-    QTime m_time;
+    QTime m_time;                   // время последней таймер анимации
     int m_lastTime;
     int m_mouseEventTime;
     int m_distExp;
     int m_frame;
     int m_maxTextureSize;
 
-    int m_currentShader;
-    int m_currentTexture;
-    bool m_dynamicCubemap;
-    bool m_updateAllCubemaps;
+    int m_currentShader;            // текущий шейдер (индекс шейдера)
+    int m_currentTexture;           // текущая текстура (индекс текстуры)
+    bool m_dynamicCubemap;          // флаг включения динамической текстуры
+    bool m_updateAllCubemaps;       // флаг необходимости перерисовки динамических текстур ???
 
-    RenderOptionsDialog *m_renderOptions;
-    ItemDialog *m_itemDialog;
-    QTimer *m_timer;
-    GLRoundedBox *m_box;
-    TrackBall m_trackBalls[3];
+    RenderOptionsDialog *m_renderOptions;       // окно параметров  (1 сторона)
+    ItemDialog *m_itemDialog;                   // окно выбора новых объектов (2 сторона)
+    QTimer *m_timer;                            // таймер анимации
+    GLRoundedBox *m_box;                        // указатель на объект - динамический куб
+    TrackBall m_trackBalls[3];                  // орбиты вращения объектов, 0 - куб, 1 - кольцо, 2 - камера (или сцена?)
     QVector<GLTexture *> m_textures;
     GLTextureCube *m_environment;
     GLTexture3D *m_noise;

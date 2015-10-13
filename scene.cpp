@@ -92,11 +92,11 @@ Scene::Scene(int width, int height, int maxTextureSize)
     , m_environmentShader(0)
     , m_environmentProgram(0)
 {
-    setSceneRect(0, 0, width, height);
+    setSceneRect(0, 0, width, height);  // устанавливаем прямоугольник отсечения сцены
 
-    m_trackBalls[0] = TrackBall(0.05f, QVector3D(0, 1, 0), TrackBall::Sphere);
-    m_trackBalls[1] = TrackBall(0.005f, QVector3D(0, 0, 1), TrackBall::Sphere);
-    m_trackBalls[2] = TrackBall(0.0f, QVector3D(0, 1, 0), TrackBall::Plane);
+    m_trackBalls[0] = TrackBall(0.05f, QVector3D(0, 1, 0), TrackBall::Sphere);  // создаём орбиту (вокруг оси Y) для центрального куба (правильного гексаэдра) (угловая скорость, ось, модель вращения)
+    m_trackBalls[1] = TrackBall(0.005f, QVector3D(0, 0, 1), TrackBall::Sphere); // создаём орбиту для кольца гексаэдров (вокруг оси Z)
+    m_trackBalls[2] = TrackBall(0.0f, QVector3D(0, 1, 0), TrackBall::Plane);    // создаём орбиту для камеры ???
 
     m_renderOptions = new RenderOptionsDialog;
     m_renderOptions->move(20, 120);

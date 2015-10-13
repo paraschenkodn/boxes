@@ -52,14 +52,15 @@ public:
     }
 
 protected:
-    void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE {
-        if (scene())
-            scene()->setSceneRect(QRect(QPoint(0, 0), event->size()));
-        QGraphicsView::resizeEvent(event);
+    void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE {             // объявляем перекрывающую функцию и сразу пишем реализацию (и так тоже оказывается можно)
+        if (scene())                                                    // если есть сцена, при изменении окна, то
+            scene()->setSceneRect(QRect(QPoint(0, 0), event->size()));  // устанавливаем новый размер отсечения области рисования  (в котором располагается диалоговое окно, на саму сцену это не влияет)
+        QGraphicsView::resizeEvent(event);                              // реализовываем перекрывающую функцию в классе (техника написания ...)
     }
 };
 
 /// Секция в которой определяем наличие всех необходимых нам расширений OpenGL
+/// Если писать по новому где CoreFunctions то этого не потребуется, там другие проверки.
 ///
 inline bool matchString(const char *extensionString, const char *subString)
 {
@@ -142,6 +143,9 @@ int main(int argc, char **argv)
         delete widget;
         return -3;
     }
+    /////////////////
+    //// Конец определения версии OpenGL
+    //**********************************
 
     /*// TODO: Make conditional for final release
     QMessageBox::information(0, "For your information",
@@ -149,8 +153,8 @@ int main(int argc, char **argv)
         "work poorly or not at all on your system.");//*/
 
     widget->makeCurrent(); // The current context must be set before calling Scene's constructor
-    Scene scene(1024, 768, maxTextureSize);
-    GraphicsView view;
+    Scene scene(1024, 768, maxTextureSize);     // создаём экземпляр дочернего класса (смотрим, чито у нас там в классе наворочено)
+    GraphicsView view;                          // создаём экземпляр дочернего класса (смотрим определение выше)
     view.setViewport(widget);
     view.setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     view.setScene(&scene);
@@ -158,4 +162,3 @@ int main(int argc, char **argv)
 
     return app.exec();
 }
-

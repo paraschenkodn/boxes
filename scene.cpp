@@ -535,6 +535,10 @@ void Scene::drawBackground(QPainter *painter, const QRectF &)
     painter->endNativePainting();
 }
 
+// ArcBall Rotation
+// http://pmg.org.ru/nehe/nehe48.htm
+// масштабируем, координаты мыши из диапазона [0…ширина], [0...высота] в диапазон [-1...1], [1...-1]
+// (запомните, что мы меняем знак координаты Y, чтобы получить корректный результат в OpenGL)
 QPointF Scene::pixelPosToViewPos(const QPointF& p)
 {
     return QPointF(2.0 * float(p.x()) / width() - 1.0,
@@ -577,7 +581,7 @@ void Scene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
     if (event->buttons() & Qt::LeftButton) {
         m_trackBalls[0].push(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
-        event->accept();
+        event->accept();  // если убрать ничего не меняется, движение не компенсируется
     }
 
     if (event->buttons() & Qt::RightButton) {

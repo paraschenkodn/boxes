@@ -36,7 +36,7 @@
 #include <cmath>
 
 //============================================================================//
-//                                  TrackBall                                 //
+//                                 TrackBall (Сфера вращения) (описаная сфера)//
 //============================================================================//
 
 /// Заметки
@@ -76,16 +76,38 @@ TrackBall::TrackBall(float angularVelocity, const QVector3D& axis, TrackMode mod
     m_lastTime = QTime::currentTime();      // зафиксируем текущее время (для вычислений с угловой скоростью)
 }
 
-// Эта функция ....
-void TrackBall::push(const QPointF& p, const QQuaternion &)
+// функция возвращает итоговый квартерион (поворот за прошедшее время с учётом последнего поворота)
+QQuaternion TrackBall::rotation() const
 {
-    m_rotation = rotation();            // запоминаем текущее значение поворота
-    m_pressed = true;                   // ВЗВОДИМ флаг нажатия клавиш мыши
-    m_lastTime = QTime::currentTime();  // запоминаем время когда запомнили текущий поворот (здесь возникает лаг с currentTime так как прошло время машшинной обработки команд и currentTime в функции rotation() != m_lastTime)
-    m_lastPos = p;                      //
-    m_angularVelocity = 0.0f;
+    if (m_paused || m_pressed)
+        return m_rotation;
+
+    QTime currentTime = QTime::currentTime();                           // получаем текущее время
+    float angle = m_angularVelocity * m_lastTime.msecsTo(currentTime);  // вычисляем угол поворота от прошлого отсчёта времени (на сколько уже повернулся объект)
+    return QQuaternion::fromAxisAndAngle(m_axis, angle) * m_rotation;   // возвращает нормализированный квартернион соответствующий повороту вокруг оси m_axis на угол поворота angle c учётом предыдущего поворота
 }
 
+// Эта функция .... (для чего??)
+// первый параметр текущая точка в которой щёлкнули кнопкой (пересчитанной из экранной в координаты (сцены??))
+// второй параметр это сопряженный кватернион (-x, -y, -z, w) от текущего ()
+///
+/// \brief TrackBall::push  //
+/// \param p                //
+///
+void TrackBall::push(const QPointF& p, const QQuaternion &)
+{
+    m_rotation = rotation();            // запоминаем текущее значение поворота в квартернионе (с учётом прошедшего времени)
+    m_pressed = true;                   // ВЗВОДИМ флаг нажатия клавиш мыши
+    m_lastTime = QTime::currentTime();  // запоминаем время когда запомнили текущий поворот (здесь возникает лаг с currentTime так как прошло время машшинной обработки команд и currentTime в функции rotation() != m_lastTime)
+    m_lastPos = p;                      // запоминаем текущую точку в которой щёлкнули кнопкой (пересчитанной из экранной в координаты (сцены??))
+    m_angularVelocity = 0.0f;           // устанавливаем угловую скорость равной 0 (тормозим вращение)
+}
+
+// функция вращения мышью по орбите
+// ArcBall Rotation (Куб вращения) (вписанная сфера)
+// http://pmg.org.ru/nehe/nehe48.htm
+// sphere - пересчёт разницы в позициях точек в (сферических и угловых???) координатах
+// plane - пересчёт разницы в позициях точек в (линейных???) координатах
 void TrackBall::move(const QPointF& p, const QQuaternion &transformation)
 {
     if (!m_pressed)
@@ -155,16 +177,5 @@ void TrackBall::stop()
 {
     m_rotation = rotation();
     m_paused = true;
-}
-
-// функция возвращает итоговый квартерион (поворот за прошедшее время с учётом бывшего поворота)
-QQuaternion TrackBall::rotation() const
-{
-    if (m_paused || m_pressed)
-        return m_rotation;
-
-    QTime currentTime = QTime::currentTime();                           // получаем текущее время
-    float angle = m_angularVelocity * m_lastTime.msecsTo(currentTime);  // вычисляем угол поворота от прошлого отсчёта времени (на сколько уже повернулся объект)
-    return QQuaternion::fromAxisAndAngle(m_axis, angle) * m_rotation;   // возвращает нормализированный квартернион соответствующий повороту вокруг оси m_axis на угол поворота angle c учётом предыдущего поворота
 }
 

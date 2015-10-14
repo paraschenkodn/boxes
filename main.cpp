@@ -119,7 +119,8 @@ int main(int argc, char **argv)
     int maxTextureSize = 1024;
     //**** старое
     QGLWidget *widget = new QGLWidget(QGLFormat(QGL::SampleBuffers)); /// старое в мусор
-    /*//**** новое
+    /*
+    //**** новое
     // QOpenGLWidget ВСЕГДА отрисовывает в буфере, поэтому надо использовать буфер
     QOpenGLWidget *widget = new QOpenGLWidget(0);  // пишем на новом классе
     QSurfaceFormat format;

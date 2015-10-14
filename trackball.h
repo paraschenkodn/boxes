@@ -56,6 +56,7 @@ public:
     void start(); // starts clock
     void stop(); // stops clock
     QQuaternion rotation() const;
+    bool k_pressed;         /// моя вставка
 private:
     QQuaternion m_rotation;     // квартерион вращения
     QVector3D m_axis;           // ось вращения

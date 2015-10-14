@@ -98,26 +98,30 @@ Scene::Scene(int width, int height, int maxTextureSize)
     m_trackBalls[1] = TrackBall(0.005f, QVector3D(0, 0, 1), TrackBall::Sphere); // создаём орбиту для кольца гексаэдров (вокруг оси Z)
     m_trackBalls[2] = TrackBall(0.0f, QVector3D(0, 1, 0), TrackBall::Plane);    // создаём орбиту для камеры ???
 
-    m_renderOptions = new RenderOptionsDialog;
-    m_renderOptions->move(20, 120);
-    m_renderOptions->resize(m_renderOptions->sizeHint());
+    m_renderOptions = new RenderOptionsDialog;              // создаём панель управления №1
+    m_renderOptions->move(20, 120);                         // перемещаем её в угол
+    m_renderOptions->resize(m_renderOptions->sizeHint());   // устанавливаем размер по рекомендованному
 
-    connect(m_renderOptions, SIGNAL(dynamicCubemapToggled(int)), this, SLOT(toggleDynamicCubemap(int)));
+    // с диалоговыми панелями сцена общается через систему сигналов
+    connect(m_renderOptions, SIGNAL(dynamicCubemapToggled(int)), this, SLOT(toggleDynamicCubemap(int)));                    //
     connect(m_renderOptions, SIGNAL(colorParameterChanged(QString,QRgb)), this, SLOT(setColorParameter(QString,QRgb)));
     connect(m_renderOptions, SIGNAL(floatParameterChanged(QString,float)), this, SLOT(setFloatParameter(QString,float)));
     connect(m_renderOptions, SIGNAL(textureChanged(int)), this, SLOT(setTexture(int)));
     connect(m_renderOptions, SIGNAL(shaderChanged(int)), this, SLOT(setShader(int)));
 
+    // создаём панель управления №2, которая также общается посредством сигналов
     m_itemDialog = new ItemDialog;
     connect(m_itemDialog, SIGNAL(newItemTriggered(ItemDialog::ItemType)), this, SLOT(newItem(ItemDialog::ItemType)));
 
+    // формируем двухсторонний виджет панели управления
     TwoSidedGraphicsWidget *twoSided = new TwoSidedGraphicsWidget(this);
     twoSided->setWidget(0, m_renderOptions);
     twoSided->setWidget(1, m_itemDialog);
-
+    // связываем его сигналами
     connect(m_renderOptions, SIGNAL(doubleClicked()), twoSided, SLOT(flip()));
     connect(m_itemDialog, SIGNAL(doubleClicked()), twoSided, SLOT(flip()));
 
+    // добавляем на сцену кубики QT
     addItem(new QtBox(64, width - 64, height - 64));
     addItem(new QtBox(64, width - 64, 64));
     addItem(new QtBox(64, 64, height - 64));
@@ -582,6 +586,7 @@ void Scene::mousePressEvent(QGraphicsSceneMouseEvent *event)
     if (event->buttons() & Qt::LeftButton) {
         m_trackBalls[0].push(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
         event->accept();  // если убрать ничего не меняется, движение не компенсируется
+        qDebug() << "X=" << pixelPosToViewPos(event->scenePos()).x() << " Y=" << pixelPosToViewPos(event->scenePos()).y() << " x=" << event->scenePos().x() << " y=" << event->scenePos().y();
     }
 
     if (event->buttons() & Qt::RightButton) {
@@ -629,6 +634,50 @@ void Scene::wheelEvent(QGraphicsSceneWheelEvent * event)
         event->accept();
     }
 }
+
+/// это моя вставка
+void Scene::keyPressEvent(QKeyEvent *event)
+{
+    QGraphicsScene::keyPressEvent(event);
+    if (event->isAccepted()) return; // блокирует приём обработанных сообщений, например из диалогового окна
+
+    m_trackBalls[0].push(QPointF(0,0), m_trackBalls[2].rotation().conjugate());
+    m_trackBalls[0].k_pressed=true;
+    QPointF point=QPointF(0,0);
+
+    switch (event->key()) {
+    case Qt::Key_Up:
+          //m_triangle->sety0(m_triangle->m_y0+step);
+      break;
+    case Qt::Key_Left:
+          point.setX(-0.1);
+      break;
+    case Qt::Key_Right:
+          point.setX(0.1);
+      break;
+    case Qt::Key_Down:
+          //m_triangle->sety0(m_triangle->m_y0-step);
+      break;
+  case Qt::Key_W:
+    break;
+  case Qt::Key_S:
+    break;
+  case Qt::Key_A:
+        //--m_angle;
+        //if (m_angle<0) m_angle=359;
+    break;
+  case Qt::Key_D:
+        //++m_angle;
+        //if (m_angle>=360) m_angle=0;
+    break;
+    default:
+      break;
+    }
+  m_trackBalls[0].release(point, m_trackBalls[2].rotation().conjugate());
+  event->accept(); //блокирует передачу сообщения конкретно дальше по сцене
+  m_trackBalls[0].k_pressed=false;
+}//*/
+/// *** это моя вставка end
 
 void Scene::setShader(int index)
 {

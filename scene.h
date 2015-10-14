@@ -78,8 +78,20 @@ protected:
 
     virtual void mousePressEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;      // работка с мышью, переопределяем функции обработки сообщений мыши (нажатие кнопок)
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;    // переопределяем функции обработки сообщений мыши (отпускание кнопки)
+    ///*********
     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;       // переопределяем функции обработки сообщений мыши (перемещение)
+    ///* если будем водить мышью по форме диалога с нажатой клавишей, сообщения также получает сцена
+    /// ********
     virtual void wheelEvent(QGraphicsSceneWheelEvent * event) Q_DECL_OVERRIDE;          // переопределяем функции обработки сообщений мыши (колесо)
+    // надо заметить что при включенных динамических текстурах здесь масштаб отражений не меняется
+    /// это моя вставка
+    virtual void keyPressEvent(QKeyEvent *event) Q_DECL_OVERRIDE;   // переопределяем функцию обработки сообщений клавиатуры
+    /// если мы объявим функцию обработки сообщений клавиатуры как
+    // void keyPressEvent(QKeyEvent *event); // можете попробовать
+    /// то она будет принадлежать конкретно к нашей сцене и итемы, объекты которые не принадлежат к нашей сцене
+    /// (т.е. parent не указывает на неё)) не будут получать нажатий клавиш клавиатуры, а так будут получать ВСЕ,
+    /// нужно фильтровать, какому итему принадлежит сообщение
+    /// *** это моя вставка end
 private:
     void initGL();                                      // инициализация OpenGL
     QPointF pixelPosToViewPos(const QPointF& p);        //

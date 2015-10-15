@@ -73,12 +73,6 @@ void checkGLErrors(const QString& prefix)
 //                                    Scene                                   //
 //============================================================================//
 
-const static char environmentShaderText[] =
-    "uniform samplerCube env;"
-    "void main() {"
-        "gl_FragColor = textureCube(env, gl_TexCoord[1].xyz);"
-    "}";
-
 Scene::Scene(int width, int height, int maxTextureSize)
     : m_distExp(600)
     , m_frame(0)
@@ -102,7 +96,7 @@ Scene::Scene(int width, int height, int maxTextureSize)
     m_renderOptions->move(20, 120);                         // перемещаем её в угол
     m_renderOptions->resize(m_renderOptions->sizeHint());   // устанавливаем размер по рекомендованному
 
-    // с диалоговыми панелями сцена общается через систему сигналов
+    // с диалоговыми панелями сцена OpenGL общается через систему сигналов
     connect(m_renderOptions, SIGNAL(dynamicCubemapToggled(int)), this, SLOT(toggleDynamicCubemap(int)));                    //
     connect(m_renderOptions, SIGNAL(colorParameterChanged(QString,QRgb)), this, SLOT(setColorParameter(QString,QRgb)));
     connect(m_renderOptions, SIGNAL(floatParameterChanged(QString,float)), this, SLOT(setFloatParameter(QString,float)));
@@ -127,14 +121,15 @@ Scene::Scene(int width, int height, int maxTextureSize)
     addItem(new QtBox(64, 64, height - 64));
     addItem(new QtBox(64, 64, 64));
 
-    initGL();
+    initGL();   // инициализируем OpenGL
 
+    // запускаем таймер анимации и привязываем его к обновлению сцены
     m_timer = new QTimer(this);
     m_timer->setInterval(20);
     connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
     m_timer->start();
 
-    m_time.start();
+    ///m_time.start();  /// закоментируем лишнюю неиспользуемую переменную
 }
 
 Scene::~Scene()
@@ -161,22 +156,29 @@ Scene::~Scene()
 
 void Scene::initGL()
 {
-    m_box = new GLRoundedBox(0.25f, 1.0f, 10);
+    m_box = new GLRoundedBox(0.25f, 1.0f, 10);                                              // рисуем кексаэдры
 
-    m_vertexShader = new QGLShader(QGLShader::Vertex);
-    m_vertexShader->compileSourceFile(QLatin1String(":/res/boxes/basic.vsh"));
+    m_vertexShader = new QGLShader(QGLShader::Vertex);                                      // создаём переменную шейдеров
+    m_vertexShader->compileSourceFile(QLatin1String(":/res/boxes/basic.vsh"));              // компилируем шейдеры
 
-    QStringList list;
+    // рисуем фон
+    const static char environmentShaderText[] =             // шейдер для куба фона
+        "uniform samplerCube env;"
+        "void main() {"
+            "gl_FragColor = textureCube(env, gl_TexCoord[1].xyz);"
+        "}";
+    QStringList list;                                                                       // формируем список текстур фона
     list << ":/res/boxes/cubemap_posx.jpg" << ":/res/boxes/cubemap_negx.jpg" << ":/res/boxes/cubemap_posy.jpg"
          << ":/res/boxes/cubemap_negy.jpg" << ":/res/boxes/cubemap_posz.jpg" << ":/res/boxes/cubemap_negz.jpg";
-    m_environment = new GLTextureCube(list, qMin(1024, m_maxTextureSize));
-    m_environmentShader = new QGLShader(QGLShader::Fragment);
+    m_environment = new GLTextureCube(list, qMin(1024, m_maxTextureSize));                  // создаём куб фона
+    m_environmentShader = new QGLShader(QGLShader::Fragment);                               //
     m_environmentShader->compileSourceCode(environmentShaderText);
     m_environmentProgram = new QGLShaderProgram;
-    m_environmentProgram->addShader(m_vertexShader);
-    m_environmentProgram->addShader(m_environmentShader);
+    m_environmentProgram->addShader(m_vertexShader);        //  добавляем программу
+    m_environmentProgram->addShader(m_environmentShader);   //  к ней ещё одну (в GPU программа одна, это у нас она разбита)
     m_environmentProgram->link();
 
+    // формируем текстурную маску из шума
     const int NOISE_SIZE = 128; // for a different size, B and BM in fbm.c must also be changed
     m_noise = new GLTexture3D(NOISE_SIZE, NOISE_SIZE, NOISE_SIZE);
     QRgb *data = new QRgb[NOISE_SIZE * NOISE_SIZE * NOISE_SIZE];
@@ -199,41 +201,41 @@ void Scene::initGL()
     m_noise->load(NOISE_SIZE, NOISE_SIZE, NOISE_SIZE, data);
     delete[] data;
 
-    m_mainCubemap = new GLRenderTargetCube(512);
+    m_mainCubemap = new GLRenderTargetCube(512);        //
 
-    QStringList filter;
-    QList<QFileInfo> files;
+    QStringList filter;                                                                     // фильтр выбора файлов
+    QList<QFileInfo> files;                                                                 // список файлов
 
-    // Load all .png files as textures
-    m_currentTexture = 0;
+    // Load all .png files as textures                                                      // загружаем все png файлы как текстуры  (куда грузим??)
+    m_currentTexture = 0;                                                                   // индекс текущей текстуры
     filter = QStringList("*.png");
-    files = QDir(":/res/boxes/").entryInfoList(filter, QDir::Files | QDir::Readable);
+    files = QDir(":/res/boxes/").entryInfoList(filter, QDir::Files | QDir::Readable);       // наполняем список в соответствии с фильтром из файлов зарегистрированных как ресурс
 
-    foreach (QFileInfo file, files) {
-        GLTexture *texture = new GLTexture2D(file.absoluteFilePath(), qMin(256, m_maxTextureSize), qMin(256, m_maxTextureSize));
+    foreach (QFileInfo file, files) {                                                       // для каждого файла
+        GLTexture *texture = new GLTexture2D(file.absoluteFilePath(), qMin(256, m_maxTextureSize), qMin(256, m_maxTextureSize));        // m_maxTextureSize определено 1024 в main.cpp, вот только qMin вернёт 256
         if (texture->failed()) {
             delete texture;
             continue;
         }
-        m_textures << texture;
-        m_renderOptions->addTexture(file.baseName());
+        m_textures << texture;                              // ??? закидываем в массив текстур  (куда закидываем???)
+        m_renderOptions->addTexture(file.baseName());       // с соответствующим индексом будет имя текстуры в панели управления
     }
 
-    if (m_textures.size() == 0)
-        m_textures << new GLTexture2D(qMin(64, m_maxTextureSize), qMin(64, m_maxTextureSize));
+    if (m_textures.size() == 0)                                                                 // если не удалось запихать текстуры
+        m_textures << new GLTexture2D(qMin(64, m_maxTextureSize), qMin(64, m_maxTextureSize));  // ??? формируем текстуру по умолчанию???
 
-    // Load all .fsh files as fragment shaders
-    m_currentShader = 0;
-    filter = QStringList("*.fsh");
-    files = QDir(":/res/boxes/").entryInfoList(filter, QDir::Files | QDir::Readable);
+    // Load all .fsh files as fragment shaders                                         // загружаем все фрагментные шейдеры
+    m_currentShader = 0;                                                                        // указатель индекса текущего шейдера
+    filter = QStringList("*.fsh");                                                              // устанавливаем маску выбора файлов
+    files = QDir(":/res/boxes/").entryInfoList(filter, QDir::Files | QDir::Readable);           //
     foreach (QFileInfo file, files) {
-        QGLShaderProgram *program = new QGLShaderProgram;
-        QGLShader* shader = new QGLShader(QGLShader::Fragment);
-        shader->compileSourceFile(file.absoluteFilePath());
-        // The program does not take ownership over the shaders, so store them in a vector so they can be deleted afterwards.
-        program->addShader(m_vertexShader);
-        program->addShader(shader);
-        if (!program->link()) {
+        QGLShaderProgram *program = new QGLShaderProgram;                                       // создаём новую программу для каждого файла
+        QGLShader* shader = new QGLShader(QGLShader::Fragment);                                 // создаём новый шейдер для каждого файла
+        shader->compileSourceFile(file.absoluteFilePath());                                     // компилируем шейдеры
+        /// The program does not take ownership over the shaders, so store them in a vector so they can be deleted afterwards.
+        program->addShader(m_vertexShader);                                                     // комбинируем программу из уже созданной основной вертексной и дополнительными фрагментными программами
+        program->addShader(shader);                                                             //
+        if (!program->link()) {                                                                 // линкуем программу  (куда?)
             qWarning("Failed to compile and link shader program");
             qWarning("Vertex shader log:");
             qWarning() << m_vertexShader->log();
@@ -244,25 +246,26 @@ void Scene::initGL()
 
             delete shader;
             delete program;
-            continue;
+            continue;                   // дальше обрабатывать файл бесполезно, возвращаемся к началу цикла
         }
 
-        m_fragmentShaders << shader;
-        m_programs << program;
-        m_renderOptions->addShader(file.baseName());
+        m_fragmentShaders << shader;                    // запихиваем фрагментный шейдер в массив фрагментных шейдеров
+        m_programs << program;                          // программу в массив программ
+        m_renderOptions->addShader(file.baseName());    // имя файлов в массив списка эффектов
 
-        program->bind();
-        m_cubemaps << ((program->uniformLocation("env") != -1) ? new GLRenderTargetCube(qMin(256, m_maxTextureSize)) : 0);
-        program->release();
+        program->bind();                                            // связываем программу (с чем???)
+        m_cubemaps << ((program->uniformLocation("env") != -1)                      // если в шейдерной программе есть переменная "env" то в массив (??? cubemaps)
+                       ? new GLRenderTargetCube(qMin(256, m_maxTextureSize)) : 0);  // пихаем новый объект (??? карты текстур) либо 0
+        program->release();                                                                     // удаляем уже ненужный экземпляр программы
     }
 
-    if (m_programs.size() == 0)
-        m_programs << new QGLShaderProgram;
+    if (m_programs.size() == 0)                         // если с программами потерпели фиаско,
+        m_programs << new QGLShaderProgram;             // ???? запихиваем в массив программу по умолчанию
 
-    m_renderOptions->emitParameterChanged();
+    m_renderOptions->emitParameterChanged();            // отсылаем сигналы изменения параметров отрисовки (для рисования)
 }
 
-static void loadMatrix(const QMatrix4x4& m)
+static void loadMatrix(const QMatrix4x4& m)             //
 {
     // static to prevent glLoadMatrixf to fail on certain drivers
     static GLfloat mat[16];
@@ -272,11 +275,13 @@ static void loadMatrix(const QMatrix4x4& m)
     glLoadMatrixf(mat);
 }
 
+/// Рисуем все кубики разом
 // If one of the boxes should not be rendered, set excludeBox to its index.
 // If the main box should not be rendered, set excludeBox to -1.
 void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
 {
     QMatrix4x4 invView = view.inverted();
+    //excludeBox=2;
 
     // If multi-texturing is supported, use three saplers.
     if (glActiveTexture) {
@@ -419,7 +424,7 @@ void Scene::setStates()
 void Scene::setLights()
 {
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    float lightColour[] = {1.0f, 0.8f, 0.2f, 1.0f};
+    float lightColour[] = {1.0f, 0.9f, 0.9f, 1.0f};
     //float lightColour[] = {1.0f, 1.0f, 1.0f, 1.0f};
     //float lightDir[] = {0.0f, 0.0f, 1.0f, 0.0f};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColour);
@@ -636,27 +641,27 @@ void Scene::wheelEvent(QGraphicsSceneWheelEvent * event)
 }
 
 /// это моя вставка
+QPointF point=QPointF(0,0);             // задаём переменную точки смещения для задания угловой скорости и расчёта вектора оси вращения
 void Scene::keyPressEvent(QKeyEvent *event)
 {
     QGraphicsScene::keyPressEvent(event);
     if (event->isAccepted()) return; // блокирует приём обработанных сообщений, например из диалогового окна
 
-    m_trackBalls[0].push(QPointF(0,0), m_trackBalls[2].rotation().conjugate());
-    m_trackBalls[0].k_pressed=true;
-    QPointF point=QPointF(0,0);
+    m_trackBalls[0].push(QPointF(0,0), m_trackBalls[2].rotation().conjugate());  // воспользуемся уже имеющейся функцией запоминания текущей позиции сферы вращения
+    m_trackBalls[0].k_pressed=true;                                              // указываем что работаем клавиатурой (по этому флагу задаётся время расчёта угловой скорости)
 
     switch (event->key()) {
     case Qt::Key_Up:
-          //m_triangle->sety0(m_triangle->m_y0+step);
+          point.setY(point.y()+0.001);                  // устанавливаем координаты точки смещения
       break;
     case Qt::Key_Left:
-          point.setX(-0.1);
+          point.setX(point.x()-0.001);
       break;
     case Qt::Key_Right:
-          point.setX(0.1);
+          point.setX(point.x()+0.001);
       break;
     case Qt::Key_Down:
-          //m_triangle->sety0(m_triangle->m_y0-step);
+          point.setY(point.y()-0.001);
       break;
   case Qt::Key_W:
     break;
@@ -673,9 +678,9 @@ void Scene::keyPressEvent(QKeyEvent *event)
     default:
       break;
     }
-  m_trackBalls[0].release(point, m_trackBalls[2].rotation().conjugate());
-  event->accept(); //блокирует передачу сообщения конкретно дальше по сцене
-  m_trackBalls[0].k_pressed=false;
+  m_trackBalls[0].release(point, m_trackBalls[2].rotation().conjugate());       // вызываем функцию расчёта угловой скорости и расчёта вектора оси вращения
+  event->accept();                                                          //блокируем передачу сообщения конкретно дальше по сцене
+  m_trackBalls[0].k_pressed=false;                                              // сбрасываем флаг работы с клавиатурой
 }//*/
 /// *** это моя вставка end
 

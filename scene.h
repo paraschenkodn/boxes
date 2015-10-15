@@ -96,7 +96,7 @@ private:
     void initGL();                                      // инициализация OpenGL
     QPointF pixelPosToViewPos(const QPointF& p);        //
 
-    QTime m_time;                   // время последней таймер анимации
+    ///QTime m_time;    /// закоментируем лишнюю неиспользуемую переменную
     int m_lastTime;
     int m_mouseEventTime;
     int m_distExp;
@@ -111,18 +111,18 @@ private:
     RenderOptionsDialog *m_renderOptions;       // окно параметров  (1 сторона)
     ItemDialog *m_itemDialog;                   // окно выбора новых объектов (2 сторона)
     QTimer *m_timer;                            // таймер анимации
-    GLRoundedBox *m_box;                        // указатель на объект - динамический куб
+    GLRoundedBox *m_box;                        // указатель на объект - кубы
     TrackBall m_trackBalls[3];                  // орбиты вращения объектов, 0 - куб, 1 - кольцо, 2 - камера (или сцена?)
-    QVector<GLTexture *> m_textures;
-    GLTextureCube *m_environment;
-    GLTexture3D *m_noise;
-    GLRenderTargetCube *m_mainCubemap;
-    QVector<GLRenderTargetCube *> m_cubemaps;
-    QVector<QGLShaderProgram *> m_programs;
-    QGLShader *m_vertexShader;
-    QVector<QGLShader *> m_fragmentShaders;
-    QGLShader *m_environmentShader;
-    QGLShaderProgram *m_environmentProgram;
+    QVector<GLTexture *> m_textures;            //
+    GLTexture3D *m_noise;                       //
+    GLRenderTargetCube *m_mainCubemap;          // центральный куб
+    QVector<GLRenderTargetCube *> m_cubemaps;   //
+    QVector<QGLShaderProgram *> m_programs;     //
+    QGLShader *m_vertexShader;                  // переменная текущего ??? шейдера
+    QVector<QGLShader *> m_fragmentShaders;     //
+    GLTextureCube *m_environment;               //
+    QGLShader *m_environmentShader;             //
+    QGLShaderProgram *m_environmentProgram;     //
 };
 
 #endif

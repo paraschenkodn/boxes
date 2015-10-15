@@ -75,14 +75,16 @@ glUnmapBuffer
 # define APIENTRYP *
 #endif
 
-#ifndef GL_VERSION_1_2
+// ??? вот смысл этих условий (GL_VERSION_1_2 GL_VERSION_1_3), если у нас в "main.cpp" написано:
+// "OpenGL version 1.5 or higher is required to run this demo.\n"
+#ifndef GL_VERSION_1_2          //???
 #define GL_TEXTURE_3D 0x806F
 #define GL_TEXTURE_WRAP_R 0x8072
 #define GL_CLAMP_TO_EDGE 0x812F
 #define GL_BGRA 0x80E1
 #endif
 
-#ifndef GL_VERSION_1_3
+#ifndef GL_VERSION_1_3          //???
 #define GL_TEXTURE0 0x84C0
 #define GL_TEXTURE1 0x84C1
 #define GL_TEXTURE2 0x84C2

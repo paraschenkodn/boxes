@@ -69,24 +69,6 @@ protected:
     bool m_failed;
 };
 
-class GLFrameBufferObject
-{
-public:
-    friend class GLRenderTargetCube;
-    // friend class GLRenderTarget2D;
-
-    GLFrameBufferObject(int width, int height);
-    virtual ~GLFrameBufferObject();
-    bool isComplete();
-    virtual bool failed() const {return m_failed;}
-protected:
-    void setAsRenderTarget(bool state = true);
-    GLuint m_fbo;
-    GLuint m_depthBuffer;
-    int m_width, m_height;
-    bool m_failed;
-};
-
 class GLTexture2D : public GLTexture
 {
 public:
@@ -118,9 +100,28 @@ public:
     virtual void unbind() Q_DECL_OVERRIDE;
 };
 
+class GLFrameBufferObject
+{
+public:
+    friend class GLRenderTargetCube;
+    // friend class GLRenderTarget2D;
+
+    GLFrameBufferObject(int width, int height);
+    virtual ~GLFrameBufferObject();
+    bool isComplete();
+    virtual bool failed() const {return m_failed;}
+protected:
+    void setAsRenderTarget(bool state = true);
+    GLuint m_fbo;
+    GLuint m_depthBuffer;
+    int m_width, m_height;
+    bool m_failed;
+};
+
 // TODO: Define and implement class below
 //class GLRenderTarget2D : public GLTexture2D
 
+//
 class GLRenderTargetCube : public GLTextureCube
 {
 public:

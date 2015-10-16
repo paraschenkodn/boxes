@@ -94,7 +94,7 @@ protected:
     /// *** это моя вставка end
 private:
     void initGL();                                      // инициализация OpenGL
-    QPointF pixelPosToViewPos(const QPointF& p);        //
+    QPointF pixelPosToViewPos(const QPointF& p);        // пересчёт координат экрана и сцены (ArcBall Rotation - http://pmg.org.ru/nehe/nehe48.htm)
 
     ///QTime m_time;    /// закоментируем лишнюю неиспользуемую переменную
     int m_lastTime;

@@ -265,14 +265,14 @@ void Scene::initGL()
     m_renderOptions->emitParameterChanged();            // отсылаем сигналы изменения параметров отрисовки (для рисования)
 }
 
-static void loadMatrix(const QMatrix4x4& m)             //
+static void loadMatrix(const QMatrix4x4& m)             //// грузим массив данных из матрицы одного типа в другой
 {
     // static to prevent glLoadMatrixf to fail on certain drivers
     static GLfloat mat[16];
     const float *data = m.constData();
     for (int index = 0; index < 16; ++index)
         mat[index] = data[index];
-    glLoadMatrixf(mat);
+    glLoadMatrixf(mat);                             // грузим массив данных из матрицы одного типа в другой (зачем????)
 }
 
 /// Рисуем все кубики разом
@@ -280,32 +280,32 @@ static void loadMatrix(const QMatrix4x4& m)             //
 // If the main box should not be rendered, set excludeBox to -1.
 void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
 {
-    QMatrix4x4 invView = view.inverted();
+    QMatrix4x4 invView = view.inverted();           //
     //excludeBox=2;
 
     // If multi-texturing is supported, use three saplers.
-    if (glActiveTexture) {
+    //if (glActiveTexture) {                  // старьё выкидываем
         glActiveTexture(GL_TEXTURE0);
         m_textures[m_currentTexture]->bind();
         glActiveTexture(GL_TEXTURE2);
         m_noise->bind();
         glActiveTexture(GL_TEXTURE1);
-    } else {
+    /*} else {
         m_textures[m_currentTexture]->bind();
-    }
+    }*/
 
     glDisable(GL_LIGHTING);
-    glDisable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);        // без этого не отрисовывается фон, почему ???
 
-    QMatrix4x4 viewRotation(view);
-    viewRotation(3, 0) = viewRotation(3, 1) = viewRotation(3, 2) = 0.0f;
-    viewRotation(0, 3) = viewRotation(1, 3) = viewRotation(2, 3) = 0.0f;
+    QMatrix4x4 viewRotation(view);                                          // создаём матрицу viewRotation из матрицы view
+    viewRotation(3, 0) = viewRotation(3, 1) = viewRotation(3, 2) = 0.0f;    // инициализируем матрицу поворота
+    viewRotation(0, 3) = viewRotation(1, 3) = viewRotation(2, 3) = 0.0f;    //
     viewRotation(3, 3) = 1.0f;
-    loadMatrix(viewRotation);
-    glScalef(20.0f, 20.0f, 20.0f);
+    loadMatrix(viewRotation);                                               // грузим сформированную матрицу glLoadMatrixf(mat);
+    glScalef(20.0f, 20.0f, 20.0f);                  // растягиваем куб (сцены???) если взять 10, фигуры тонут, если взять 50, пропадает фон
 
     // Don't render the environment if the environment texture can't be set for the correct sampler.
-    if (glActiveTexture) {
+    // if (glActiveTexture) {  // старьё выкидываем
         m_environment->bind();
         m_environmentProgram->bind();
         m_environmentProgram->setUniformValue("tex", GLint(0));
@@ -314,7 +314,7 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
         m_box->draw();
         m_environmentProgram->release();
         m_environment->unbind();
-    }
+    //}
 
     loadMatrix(view);
 
@@ -334,12 +334,12 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
         glTranslatef(2.0f, 0.0f, 0.0f);
         glScalef(0.3f, 0.6f, 0.6f);
 
-        if (glActiveTexture) {
+        // if (glActiveTexture) {  // старьё выкидываем
             if (m_dynamicCubemap && m_cubemaps[i])
                 m_cubemaps[i]->bind();
             else
                 m_environment->bind();
-        }
+        //}
         m_programs[i]->bind();
         m_programs[i]->setUniformValue("tex", GLint(0));
         m_programs[i]->setUniformValue("env", GLint(1));
@@ -349,12 +349,12 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
         m_box->draw();
         m_programs[i]->release();
 
-        if (glActiveTexture) {
+        // if (glActiveTexture) {  // старьё выкидываем
             if (m_dynamicCubemap && m_cubemaps[i])
                 m_cubemaps[i]->unbind();
             else
                 m_environment->unbind();
-        }
+        //}
         glPopMatrix();
     }
 
@@ -363,12 +363,12 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
         m.rotate(m_trackBalls[0].rotation());
         glMultMatrixf(m.constData());
 
-        if (glActiveTexture) {
+        // if (glActiveTexture) {  // старьё выкидываем
             if (m_dynamicCubemap)
                 m_mainCubemap->bind();
             else
                 m_environment->bind();
-        }
+        //}
 
         m_programs[m_currentShader]->bind();
         m_programs[m_currentShader]->setUniformValue("tex", GLint(0));
@@ -379,19 +379,19 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
         m_box->draw();
         m_programs[m_currentShader]->release();
 
-        if (glActiveTexture) {
+        // if (glActiveTexture) {  // старьё выкидываем
             if (m_dynamicCubemap)
                 m_mainCubemap->unbind();
             else
                 m_environment->unbind();
-        }
+        //}
     }
 
-    if (glActiveTexture) {
+    // if (glActiveTexture) {  // старьё выкидываем
         glActiveTexture(GL_TEXTURE2);
         m_noise->unbind();
         glActiveTexture(GL_TEXTURE0);
-    }
+    //}
     m_textures[m_currentTexture]->unbind();
 }
 

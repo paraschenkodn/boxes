@@ -304,6 +304,7 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
     loadMatrix(viewRotation);                                               // грузим сформированную матрицу glLoadMatrixf(mat);
     glScalef(20.0f, 20.0f, 20.0f);                  // растягиваем куб (сцены???) если взять 10, фигуры тонут, если взять 50, пропадает фон
 
+    // РИСУЕМ ФОН
     // Don't render the environment if the environment texture can't be set for the correct sampler.
     // if (glActiveTexture) {  // старьё выкидываем
         m_environment->bind();
@@ -321,6 +322,7 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
     glEnable(GL_CULL_FACE);
     glEnable(GL_LIGHTING);
 
+    // РИСУЕМ КРУГ ИЗ КУБОВ, по одному на каждую шейдерную программу
     for (int i = 0; i < m_programs.size(); ++i) {
         if (i == excludeBox)
             continue;
@@ -358,9 +360,10 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
         glPopMatrix();
     }
 
+    // РИСУЕМ ГЛАВНЫЙ КУБ
     if (-1 != excludeBox) {
         QMatrix4x4 m;
-        m.rotate(m_trackBalls[0].rotation());
+        m.rotate(m_trackBalls[0].rotation()); //  получаем текущую матрицу поворота
         glMultMatrixf(m.constData());
 
         // if (glActiveTexture) {  // старьё выкидываем

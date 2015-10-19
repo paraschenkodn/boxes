@@ -115,12 +115,12 @@ private:
     TrackBall m_trackBalls[3];                  // орбиты вращения объектов, 0 - куб, 1 - кольцо, 2 - камера (или сцена?)
     QVector<GLTexture *> m_textures;            //
     GLTexture3D *m_noise;                       //
-    GLRenderTargetCube *m_mainCubemap;          // центральный куб
-    QVector<GLRenderTargetCube *> m_cubemaps;   //
+    GLRenderTargetCube *m_mainCubemap;          // динамические текстуры - центральный куб -
+    QVector<GLRenderTargetCube *> m_cubemaps;   //  -- динамические текстуры для круга кубов
     QVector<QGLShaderProgram *> m_programs;     //
     QGLShader *m_vertexShader;                  // переменная текущего ??? шейдера
     QVector<QGLShader *> m_fragmentShaders;     //
-    GLTextureCube *m_environment;               //
+    GLTextureCube *m_environment;               // - фон - http://antongerdelan.net/opengl/cubemaps.html
     QGLShader *m_environmentShader;             //
     QGLShaderProgram *m_environmentProgram;     //
 };

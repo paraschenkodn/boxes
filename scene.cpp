@@ -322,7 +322,7 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
     glEnable(GL_CULL_FACE);
     glEnable(GL_LIGHTING);
 
-    // РИСУЕМ КРУГ ИЗ КУБОВ, по одному на каждую шейдерную программу
+    /*/ РИСУЕМ КРУГ ИЗ КУБОВ, по одному на каждую шейдерную программу
     for (int i = 0; i < m_programs.size(); ++i) {
         if (i == excludeBox)
             continue;
@@ -358,9 +358,9 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
                 m_environment->unbind();
         //}
         glPopMatrix();
-    }
+    }//*/
 
-    // РИСУЕМ ГЛАВНЫЙ КУБ
+    /*/ РИСУЕМ ГЛАВНЫЙ КУБ
     if (-1 != excludeBox) {
         QMatrix4x4 m;
         m.rotate(m_trackBalls[0].rotation()); //  получаем текущую матрицу поворота
@@ -388,7 +388,7 @@ void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
             else
                 m_environment->unbind();
         //}
-    }
+    }//*/
 
     // if (glActiveTexture) {  // старьё выкидываем
         glActiveTexture(GL_TEXTURE2);

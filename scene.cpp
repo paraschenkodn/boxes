@@ -81,16 +81,11 @@ Scene::Scene(int width, int height, int maxTextureSize)
     , m_currentTexture(0)
     , m_dynamicCubemap(false)
     , m_updateAllCubemaps(true)
-    , m_box(0)
     , m_vertexShader(0)
     , m_environmentShader(0)
     , m_environmentProgram(0)
 {
     setSceneRect(0, 0, width, height);  // устанавливаем прямоугольник отсечения сцены
-
-    m_trackBalls[0] = TrackBall(0.05f, QVector3D(0, 1, 0), TrackBall::Sphere);  // создаём орбиту (вокруг оси Y) для центрального куба (правильного гексаэдра) (угловая скорость, ось, модель вращения)
-    m_trackBalls[1] = TrackBall(0.005f, QVector3D(0, 0, 1), TrackBall::Sphere); // создаём орбиту для кольца гексаэдров (вокруг оси Z)
-    m_trackBalls[2] = TrackBall(0.0f, QVector3D(0, 1, 0), TrackBall::Plane);    // создаём орбиту для камеры ???
 
     m_renderOptions = new RenderOptionsDialog;              // создаём панель управления №1
     m_renderOptions->move(20, 120);                         // перемещаем её в угол
@@ -121,7 +116,7 @@ Scene::Scene(int width, int height, int maxTextureSize)
     addItem(new QtBox(64, 64, height - 64));
     addItem(new QtBox(64, 64, 64));
 
-    initGL();   // инициализируем OpenGL
+    //initGL();   // инициализируем OpenGL
 
     // запускаем таймер анимации и привязываем его к обновлению сцены
     m_timer = new QTimer(this);
@@ -134,12 +129,8 @@ Scene::Scene(int width, int height, int maxTextureSize)
 
 Scene::~Scene()
 {
-    if (m_box)
-        delete m_box;
     foreach (GLTexture *texture, m_textures)
         if (texture) delete texture;
-    if (m_mainCubemap)
-        delete m_mainCubemap;
     foreach (QGLShaderProgram *program, m_programs)
         if (program) delete program;
     if (m_vertexShader)
@@ -156,7 +147,6 @@ Scene::~Scene()
 
 void Scene::initGL()
 {
-    m_box = new GLRoundedBox(0.25f, 1.0f, 10);                                              // рисуем кексаэдры
 
     m_vertexShader = new QGLShader(QGLShader::Vertex);                                      // создаём переменную шейдеров
     m_vertexShader->compileSourceFile(QLatin1String(":/res/boxes/basic.vsh"));              // компилируем шейдеры
@@ -178,30 +168,6 @@ void Scene::initGL()
     m_environmentProgram->addShader(m_environmentShader);   //  к ней ещё одну (в GPU программа одна, это у нас она разбита)
     m_environmentProgram->link();
 
-    // формируем текстурную маску из шума
-    const int NOISE_SIZE = 128; // for a different size, B and BM in fbm.c must also be changed
-    m_noise = new GLTexture3D(NOISE_SIZE, NOISE_SIZE, NOISE_SIZE);
-    QRgb *data = new QRgb[NOISE_SIZE * NOISE_SIZE * NOISE_SIZE];
-    memset(data, 0, NOISE_SIZE * NOISE_SIZE * NOISE_SIZE * sizeof(QRgb));
-    QRgb *p = data;
-    float pos[3];
-    for (int k = 0; k < NOISE_SIZE; ++k) {
-        pos[2] = k * (0x20 / (float)NOISE_SIZE);
-        for (int j = 0; j < NOISE_SIZE; ++j) {
-            for (int i = 0; i < NOISE_SIZE; ++i) {
-                for (int byte = 0; byte < 4; ++byte) {
-                    pos[0] = (i + (byte & 1) * 16) * (0x20 / (float)NOISE_SIZE);
-                    pos[1] = (j + (byte & 2) * 8) * (0x20 / (float)NOISE_SIZE);
-                    *p |= (int)(128.0f * (noise3(pos) + 1.0f)) << (byte * 8);
-                }
-                ++p;
-            }
-        }
-    }
-    m_noise->load(NOISE_SIZE, NOISE_SIZE, NOISE_SIZE, data);
-    delete[] data;
-
-    m_mainCubemap = new GLRenderTargetCube(512);        //
 
     QStringList filter;                                                                     // фильтр выбора файлов
     QList<QFileInfo> files;                                                                 // список файлов
@@ -275,129 +241,6 @@ static void loadMatrix(const QMatrix4x4& m)             //// грузим мас
     glLoadMatrixf(mat);                             // грузим массив данных из матрицы одного типа в другой (зачем????)
 }
 
-/// Рисуем все кубики разом
-// If one of the boxes should not be rendered, set excludeBox to its index.
-// If the main box should not be rendered, set excludeBox to -1.
-void Scene::renderBoxes(const QMatrix4x4 &view, int excludeBox)
-{
-    QMatrix4x4 invView = view.inverted();           //
-    //excludeBox=2;
-
-    // If multi-texturing is supported, use three saplers.
-    //if (glActiveTexture) {                  // старьё выкидываем
-        glActiveTexture(GL_TEXTURE0);
-        m_textures[m_currentTexture]->bind();
-        glActiveTexture(GL_TEXTURE2);
-        m_noise->bind();
-        glActiveTexture(GL_TEXTURE1);
-    /*} else {
-        m_textures[m_currentTexture]->bind();
-    }*/
-
-    glDisable(GL_LIGHTING);
-    glDisable(GL_CULL_FACE);        // без этого не отрисовывается фон, почему ???
-
-    QMatrix4x4 viewRotation(view);                                          // создаём матрицу viewRotation из матрицы view
-    viewRotation(3, 0) = viewRotation(3, 1) = viewRotation(3, 2) = 0.0f;    // инициализируем матрицу поворота
-    viewRotation(0, 3) = viewRotation(1, 3) = viewRotation(2, 3) = 0.0f;    //
-    viewRotation(3, 3) = 1.0f;
-    loadMatrix(viewRotation);                                               // грузим сформированную матрицу glLoadMatrixf(mat);
-    glScalef(20.0f, 20.0f, 20.0f);                  // растягиваем куб (сцены???) если взять 10, фигуры тонут, если взять 50, пропадает фон
-
-    // РИСУЕМ ФОН
-    // Don't render the environment if the environment texture can't be set for the correct sampler.
-    // if (glActiveTexture) {  // старьё выкидываем
-        m_environment->bind();
-        m_environmentProgram->bind();
-        m_environmentProgram->setUniformValue("tex", GLint(0));
-        m_environmentProgram->setUniformValue("env", GLint(1));
-        m_environmentProgram->setUniformValue("noise", GLint(2));
-        m_box->draw();
-        m_environmentProgram->release();
-        m_environment->unbind();
-    //}
-
-    loadMatrix(view);
-
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_LIGHTING);
-
-    /*/ РИСУЕМ КРУГ ИЗ КУБОВ, по одному на каждую шейдерную программу
-    for (int i = 0; i < m_programs.size(); ++i) {
-        if (i == excludeBox)
-            continue;
-
-        glPushMatrix();
-        QMatrix4x4 m;
-        m.rotate(m_trackBalls[1].rotation());
-        glMultMatrixf(m.constData());
-
-        glRotatef(360.0f * i / m_programs.size(), 0.0f, 0.0f, 1.0f);
-        glTranslatef(2.0f, 0.0f, 0.0f);
-        glScalef(0.3f, 0.6f, 0.6f);
-
-        // if (glActiveTexture) {  // старьё выкидываем
-            if (m_dynamicCubemap && m_cubemaps[i])
-                m_cubemaps[i]->bind();
-            else
-                m_environment->bind();
-        //}
-        m_programs[i]->bind();
-        m_programs[i]->setUniformValue("tex", GLint(0));
-        m_programs[i]->setUniformValue("env", GLint(1));
-        m_programs[i]->setUniformValue("noise", GLint(2));
-        m_programs[i]->setUniformValue("view", view);
-        m_programs[i]->setUniformValue("invView", invView);
-        m_box->draw();
-        m_programs[i]->release();
-
-        // if (glActiveTexture) {  // старьё выкидываем
-            if (m_dynamicCubemap && m_cubemaps[i])
-                m_cubemaps[i]->unbind();
-            else
-                m_environment->unbind();
-        //}
-        glPopMatrix();
-    }//*/
-
-    /*/ РИСУЕМ ГЛАВНЫЙ КУБ
-    if (-1 != excludeBox) {
-        QMatrix4x4 m;
-        m.rotate(m_trackBalls[0].rotation()); //  получаем текущую матрицу поворота
-        glMultMatrixf(m.constData());
-
-        // if (glActiveTexture) {  // старьё выкидываем
-            if (m_dynamicCubemap)
-                m_mainCubemap->bind();
-            else
-                m_environment->bind();
-        //}
-
-        m_programs[m_currentShader]->bind();
-        m_programs[m_currentShader]->setUniformValue("tex", GLint(0));
-        m_programs[m_currentShader]->setUniformValue("env", GLint(1));
-        m_programs[m_currentShader]->setUniformValue("noise", GLint(2));
-        m_programs[m_currentShader]->setUniformValue("view", view);
-        m_programs[m_currentShader]->setUniformValue("invView", invView);
-        m_box->draw();
-        m_programs[m_currentShader]->release();
-
-        // if (glActiveTexture) {  // старьё выкидываем
-            if (m_dynamicCubemap)
-                m_mainCubemap->unbind();
-            else
-                m_environment->unbind();
-        //}
-    }//*/
-
-    // if (glActiveTexture) {  // старьё выкидываем
-        glActiveTexture(GL_TEXTURE2);
-        m_noise->unbind();
-        glActiveTexture(GL_TEXTURE0);
-    //}
-    m_textures[m_currentTexture]->unbind();
-}
-
 void Scene::setStates()
 {
     //glClearColor(0.25f, 0.25f, 0.5f, 1.0f);
@@ -461,63 +304,6 @@ void Scene::defaultStates()
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
 }
 
-void Scene::renderCubemaps()
-{
-    // To speed things up, only update the cubemaps for the small cubes every N frames.
-    const int N = (m_updateAllCubemaps ? 1 : 3);
-
-    QMatrix4x4 mat;
-    GLRenderTargetCube::getProjectionMatrix(mat, 0.1f, 100.0f);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    loadMatrix(mat);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-
-    QVector3D center;
-
-    for (int i = m_frame % N; i < m_cubemaps.size(); i += N) {
-        if (0 == m_cubemaps[i])
-            continue;
-
-        float angle = 2.0f * PI * i / m_cubemaps.size();
-
-        center = m_trackBalls[1].rotation().rotatedVector(QVector3D(std::cos(angle), std::sin(angle), 0.0f));
-
-        for (int face = 0; face < 6; ++face) {
-            m_cubemaps[i]->begin(face);
-
-            GLRenderTargetCube::getViewMatrix(mat, face);
-            QVector4D v = QVector4D(-center.x(), -center.y(), -center.z(), 1.0);
-            mat.setColumn(3, mat * v);
-
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            renderBoxes(mat, i);
-
-            m_cubemaps[i]->end();
-        }
-    }
-
-    for (int face = 0; face < 6; ++face) {
-        m_mainCubemap->begin(face);
-        GLRenderTargetCube::getViewMatrix(mat, face);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        renderBoxes(mat, -1);
-
-        m_mainCubemap->end();
-    }
-
-    glPopMatrix();
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-
-    m_updateAllCubemaps = false;
-}
-
 void Scene::drawBackground(QPainter *painter, const QRectF &)
 {
     float width = float(painter->device()->width());
@@ -525,9 +311,6 @@ void Scene::drawBackground(QPainter *painter, const QRectF &)
 
     painter->beginNativePainting();
     setStates();
-
-    if (m_dynamicCubemap)
-        renderCubemaps();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -537,9 +320,9 @@ void Scene::drawBackground(QPainter *painter, const QRectF &)
     glMatrixMode(GL_MODELVIEW);
 
     QMatrix4x4 view;
-    view.rotate(m_trackBalls[2].rotation());
+    //view.rotate(m_trackBalls[2].rotation());
     view(2, 3) -= 2.0f * std::exp(m_distExp / 1200.0f);
-    renderBoxes(view);
+    //renderBoxes(view);
 
     defaultStates();
     ++m_frame;
@@ -564,24 +347,24 @@ void Scene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         return;
 
     if (event->buttons() & Qt::LeftButton) {
-        m_trackBalls[0].move(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
+        //m_trackBalls[0].move(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
         event->accept();
     } else {
-        m_trackBalls[0].release(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
+        //m_trackBalls[0].release(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
     }
 
     if (event->buttons() & Qt::RightButton) {
-        m_trackBalls[1].move(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
+        //m_trackBalls[1].move(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
         event->accept();
     } else {
-        m_trackBalls[1].release(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
+        //m_trackBalls[1].release(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
     }
 
     if (event->buttons() & Qt::MidButton) {
-        m_trackBalls[2].move(pixelPosToViewPos(event->scenePos()), QQuaternion());
+        //m_trackBalls[2].move(pixelPosToViewPos(event->scenePos()), QQuaternion());
         event->accept();
     } else {
-        m_trackBalls[2].release(pixelPosToViewPos(event->scenePos()), QQuaternion());
+        //m_trackBalls[2].release(pixelPosToViewPos(event->scenePos()), QQuaternion());
     }
 }
 
@@ -592,18 +375,18 @@ void Scene::mousePressEvent(QGraphicsSceneMouseEvent *event)
         return;
 
     if (event->buttons() & Qt::LeftButton) {
-        m_trackBalls[0].push(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
+        //m_trackBalls[0].push(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
         event->accept();  // если убрать ничего не меняется, движение не компенсируется
         qDebug() << "X=" << pixelPosToViewPos(event->scenePos()).x() << " Y=" << pixelPosToViewPos(event->scenePos()).y() << " x=" << event->scenePos().x() << " y=" << event->scenePos().y();
     }
 
     if (event->buttons() & Qt::RightButton) {
-        m_trackBalls[1].push(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
+        //m_trackBalls[1].push(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
         event->accept();
     }
 
     if (event->buttons() & Qt::MidButton) {
-        m_trackBalls[2].push(pixelPosToViewPos(event->scenePos()), QQuaternion());
+        //m_trackBalls[2].push(pixelPosToViewPos(event->scenePos()), QQuaternion());
         event->accept();
     }
 }
@@ -615,17 +398,17 @@ void Scene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
         return;
 
     if (event->button() == Qt::LeftButton) {
-        m_trackBalls[0].release(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
+        //m_trackBalls[0].release(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
         event->accept();
     }
 
     if (event->button() == Qt::RightButton) {
-        m_trackBalls[1].release(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
+        //m_trackBalls[1].release(pixelPosToViewPos(event->scenePos()), m_trackBalls[2].rotation().conjugate());
         event->accept();
     }
 
     if (event->button() == Qt::MidButton) {
-        m_trackBalls[2].release(pixelPosToViewPos(event->scenePos()), QQuaternion());
+        //m_trackBalls[2].release(pixelPosToViewPos(event->scenePos()), QQuaternion());
         event->accept();
     }
 }
@@ -650,8 +433,8 @@ void Scene::keyPressEvent(QKeyEvent *event)
     QGraphicsScene::keyPressEvent(event);
     if (event->isAccepted()) return; // блокирует приём обработанных сообщений, например из диалогового окна
 
-    m_trackBalls[0].push(QPointF(0,0), m_trackBalls[2].rotation().conjugate());  // воспользуемся уже имеющейся функцией запоминания текущей позиции сферы вращения
-    m_trackBalls[0].k_pressed=true;                                              // указываем что работаем клавиатурой (по этому флагу задаётся время расчёта угловой скорости)
+    //m_trackBalls[0].push(QPointF(0,0), m_trackBalls[2].rotation().conjugate());  // воспользуемся уже имеющейся функцией запоминания текущей позиции сферы вращения
+    //m_trackBalls[0].k_pressed=true;                                              // указываем что работаем клавиатурой (по этому флагу задаётся время расчёта угловой скорости)
 
     switch (event->key()) {
     case Qt::Key_Up:
@@ -681,9 +464,9 @@ void Scene::keyPressEvent(QKeyEvent *event)
     default:
       break;
     }
-  m_trackBalls[0].release(point, m_trackBalls[2].rotation().conjugate());       // вызываем функцию расчёта угловой скорости и расчёта вектора оси вращения
+  //m_trackBalls[0].release(point, m_trackBalls[2].rotation().conjugate());       // вызываем функцию расчёта угловой скорости и расчёта вектора оси вращения
   event->accept();                                                          //блокируем передачу сообщения конкретно дальше по сцене
-  m_trackBalls[0].k_pressed=false;                                              // сбрасываем флаг работы с клавиатурой
+  //m_trackBalls[0].k_pressed=false;                                              // сбрасываем флаг работы с клавиатурой
 }//*/
 /// *** это моя вставка end
 

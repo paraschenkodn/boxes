@@ -118,16 +118,21 @@ int main(int argc, char **argv)
     // Создаём виджет, на котором будем рисовать
     int maxTextureSize = 1024;
     //**** старое
-    QGLWidget *widget = new QGLWidget(QGLFormat(QGL::SampleBuffers)); /// старое в мусор
-    /*
+    ///QGLWidget *widget = new QGLWidget(QGLFormat(QGL::SampleBuffers)); /// старое в мусор
+
     //**** новое
     // QOpenGLWidget ВСЕГДА отрисовывает в буфере, поэтому надо использовать буфер
     QOpenGLWidget *widget = new QOpenGLWidget(0);  // пишем на новом классе
     QSurfaceFormat format;
-    //*/
+    format.setDepthBufferSize(24);
+    format.setStencilBufferSize(8);
+    format.setVersion(3, 0);
+    format.setProfile(QSurfaceFormat::NoProfile);
+    widget->setFormat(format); // must be called before the widget or its parent window gets shown//*/
     //**** енд старое новое
     widget->makeCurrent();
 
+/*
     if (!necessaryExtensionsSupported()) {
         QMessageBox::critical(0, "OpenGL features missing",
             "The OpenGL extensions required to run this demo are missing.\n"
@@ -146,7 +151,7 @@ int main(int argc, char **argv)
     }
     /////////////////
     //// Конец определения версии OpenGL
-    //**********************************
+    //**********************************/
 
     /*// TODO: Make conditional for final release
     QMessageBox::information(0, "For your information",
@@ -154,10 +159,10 @@ int main(int argc, char **argv)
         "work poorly or not at all on your system.");//*/
 
     widget->makeCurrent(); // The current context must be set before calling Scene's constructor
-    Scene scene(1024, 768, maxTextureSize);     // создаём экземпляр дочернего класса (смотрим, чито у нас там в классе наворочено)
     GraphicsView view;                          // создаём экземпляр дочернего класса (смотрим определение выше)
     view.setViewport(widget);
     view.setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    Scene scene(1024, 768, maxTextureSize);     // создаём экземпляр дочернего класса (смотрим, чито у нас там в классе наворочено)
     view.setScene(&scene);
     view.show();
 

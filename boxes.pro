@@ -2,23 +2,19 @@ QT += opengl widgets
 
 contains(QT_CONFIG, opengles.|angle|dynamicgl):error("This example requires Qt to be configured with -opengl desktop")
 
-HEADERS += 3rdparty/fbm.h \
+HEADERS += \
            glbuffers.h \
            glextensions.h \
            gltrianglemesh.h \
            qtbox.h \
-           roundedbox.h \
            scene.h \
-           trackball.h \
     dialogboxes.h
-SOURCES += 3rdparty/fbm.c \
+SOURCES += \
            glbuffers.cpp \
            glextensions.cpp \
            main.cpp \
            qtbox.cpp \
-           roundedbox.cpp \
            scene.cpp \
-           trackball.cpp \
     dialogboxes.cpp
 
 RESOURCES += boxes.qrc

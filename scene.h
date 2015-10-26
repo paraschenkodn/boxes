@@ -40,9 +40,9 @@
 #include <QtWidgets>
 #include <QtOpenGL>
 
-#include "roundedbox.h"
+//#include "roundedbox.h"
 #include "gltrianglemesh.h"
-#include "trackball.h"
+//#include "trackball.h"
 #include "glbuffers.h"
 #include "qtbox.h"
 #include "dialogboxes.h"
@@ -70,11 +70,9 @@ public slots:
     void setFloatParameter(const QString &name, float value);       // установка цвета объетов, в параметрах - ??????
     void newItem(ItemDialog::ItemType type);                    // рисуем статические объекты
 protected:
-    void renderBoxes(const QMatrix4x4 &view, int excludeBox = -2);      // рисуем круг из боксов (??)
     void setStates();                                               //
     void setLights();                                               //
     void defaultStates();                                           //
-    void renderCubemaps();                                          //
 
     virtual void mousePressEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;      // работка с мышью, переопределяем функции обработки сообщений мыши (нажатие кнопок)
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;    // переопределяем функции обработки сообщений мыши (отпускание кнопки)
@@ -111,11 +109,8 @@ private:
     RenderOptionsDialog *m_renderOptions;       // окно параметров  (1 сторона)
     ItemDialog *m_itemDialog;                   // окно выбора новых объектов (2 сторона)
     QTimer *m_timer;                            // таймер анимации
-    GLRoundedBox *m_box;                        // указатель на объект - кубы
-    TrackBall m_trackBalls[3];                  // орбиты вращения объектов, 0 - куб, 1 - кольцо, 2 - камера (или сцена?)
     QVector<GLTexture *> m_textures;            //
     GLTexture3D *m_noise;                       //
-    GLRenderTargetCube *m_mainCubemap;          // динамические текстуры - центральный куб -
     QVector<GLRenderTargetCube *> m_cubemaps;   //  -- динамические текстуры для круга кубов
     QVector<QGLShaderProgram *> m_programs;     //
     QGLShader *m_vertexShader;                  // переменная текущего ??? шейдера

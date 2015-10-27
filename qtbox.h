@@ -37,7 +37,7 @@
 #include <QtWidgets>
 
 #include <QtGui/qvector3d.h>
-#include "glbuffers.h"
+//#include "glbuffers.h"
 
 class ItemBase : public QGraphicsItem
 {

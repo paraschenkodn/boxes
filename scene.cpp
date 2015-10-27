@@ -39,6 +39,15 @@
 
 #include "3rdparty/fbm.h"
 
+void qgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
+{
+    const GLdouble ymax = zNear * tan(fovy * M_PI / 360.0);
+    const GLdouble ymin = -ymax;
+    const GLdouble xmin = ymin * aspect;
+    const GLdouble xmax = ymax * aspect;
+    glFrustum(xmin, xmax, ymin, ymax, zNear, zFar);
+}
+
 void checkGLErrors(const QString& prefix)
 {
     switch (glGetError()) {
@@ -111,10 +120,10 @@ Scene::Scene(int width, int height, int maxTextureSize)
     connect(m_itemDialog, SIGNAL(doubleClicked()), twoSided, SLOT(flip()));
 
     // добавляем на сцену кубики QT
-    addItem(new QtBox(64, width - 64, height - 64));
-    addItem(new QtBox(64, width - 64, 64));
-    addItem(new QtBox(64, 64, height - 64));
-    addItem(new QtBox(64, 64, 64));
+    //addItem(new QtBox(64, width - 64, height - 64));
+    //addItem(new QtBox(64, width - 64, 64));
+    //addItem(new QtBox(64, 64, height - 64));
+    //addItem(new QtBox(64, 64, 64));
 
     //initGL();   // инициализируем OpenGL
 
@@ -129,16 +138,14 @@ Scene::Scene(int width, int height, int maxTextureSize)
 
 Scene::~Scene()
 {
-    foreach (GLTexture *texture, m_textures)
-        if (texture) delete texture;
+    //foreach (GLTexture *texture, m_textures) if (texture) delete texture;
     foreach (QGLShaderProgram *program, m_programs)
         if (program) delete program;
     if (m_vertexShader)
         delete m_vertexShader;
     foreach (QGLShader *shader, m_fragmentShaders)
         if (shader) delete shader;
-    foreach (GLRenderTargetCube *rt, m_cubemaps)
-        if (rt) delete rt;
+    //foreach (GLRenderTargetCube *rt, m_cubemaps) if (rt) delete rt;
     if (m_environmentShader)
         delete m_environmentShader;
     if (m_environmentProgram)
@@ -160,7 +167,7 @@ void Scene::initGL()
     QStringList list;                                                                       // формируем список текстур фона
     list << ":/res/boxes/cubemap_posx.jpg" << ":/res/boxes/cubemap_negx.jpg" << ":/res/boxes/cubemap_posy.jpg"
          << ":/res/boxes/cubemap_negy.jpg" << ":/res/boxes/cubemap_posz.jpg" << ":/res/boxes/cubemap_negz.jpg";
-    m_environment = new GLTextureCube(list, qMin(1024, m_maxTextureSize));                  // создаём куб фона
+    //m_environment = new GLTextureCube(list, qMin(1024, m_maxTextureSize));                  // создаём куб фона
     m_environmentShader = new QGLShader(QGLShader::Fragment);                               //
     m_environmentShader->compileSourceCode(environmentShaderText);
     m_environmentProgram = new QGLShaderProgram;
@@ -176,7 +183,7 @@ void Scene::initGL()
     m_currentTexture = 0;                                                                   // индекс текущей текстуры
     filter = QStringList("*.png");
     files = QDir(":/res/boxes/").entryInfoList(filter, QDir::Files | QDir::Readable);       // наполняем список в соответствии с фильтром из файлов зарегистрированных как ресурс
-
+/*
     foreach (QFileInfo file, files) {                                                       // для каждого файла
         GLTexture *texture = new GLTexture2D(file.absoluteFilePath(), qMin(256, m_maxTextureSize), qMin(256, m_maxTextureSize));        // m_maxTextureSize определено 1024 в main.cpp, вот только qMin вернёт 256
         if (texture->failed()) {
@@ -189,6 +196,7 @@ void Scene::initGL()
 
     if (m_textures.size() == 0)                                                                 // если не удалось запихать текстуры
         m_textures << new GLTexture2D(qMin(64, m_maxTextureSize), qMin(64, m_maxTextureSize));  // ??? формируем текстуру по умолчанию???
+//*/
 
     // Load all .fsh files as fragment shaders                                         // загружаем все фрагментные шейдеры
     m_currentShader = 0;                                                                        // указатель индекса текущего шейдера
@@ -218,11 +226,12 @@ void Scene::initGL()
         m_fragmentShaders << shader;                    // запихиваем фрагментный шейдер в массив фрагментных шейдеров
         m_programs << program;                          // программу в массив программ
         m_renderOptions->addShader(file.baseName());    // имя файлов в массив списка эффектов
-
+/*
         program->bind();                                            // связываем программу (с чем???)
         m_cubemaps << ((program->uniformLocation("env") != -1)                      // если в шейдерной программе есть переменная "env" то в массив (??? cubemaps)
                        ? new GLRenderTargetCube(qMin(256, m_maxTextureSize)) : 0);  // пихаем новый объект (??? карты текстур) либо 0
         program->release();                                                                     // удаляем уже ненужный экземпляр программы
+//*/
     }
 
     if (m_programs.size() == 0)                         // если с программами потерпели фиаско,
@@ -476,11 +485,11 @@ void Scene::setShader(int index)
         m_currentShader = index;
 }
 
-void Scene::setTexture(int index)
+/*void Scene::setTexture(int index)
 {
     if (index >= 0 && index < m_textures.size())
         m_currentTexture = index;
-}
+}//*/
 
 void Scene::toggleDynamicCubemap(int state)
 {
@@ -508,7 +517,7 @@ void Scene::setFloatParameter(const QString &name, float value)
     }
 }
 
-void Scene::newItem(ItemDialog::ItemType type)
+/*void Scene::newItem(ItemDialog::ItemType type)
 {
     QSize size = sceneRect().size().toSize();
     switch (type) {
@@ -524,4 +533,4 @@ void Scene::newItem(ItemDialog::ItemType type)
     default:
         break;
     }
-}
+}//*/

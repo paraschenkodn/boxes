@@ -141,8 +141,6 @@ void GLTexture2D::unbind()
 
 GLTexture3D::GLTexture3D(int width, int height, int depth)
 {
-    GLBUFFERS_ASSERT_OPENGL("GLTexture3D::GLTexture3D", glTexImage3D, return)
-
     glBindTexture(GL_TEXTURE_3D, m_texture);
     glTexImage3D(GL_TEXTURE_3D, 0, 4, width, height, depth, 0,
         GL_BGRA, GL_UNSIGNED_BYTE, 0);
@@ -159,8 +157,6 @@ GLTexture3D::GLTexture3D(int width, int height, int depth)
 
 void GLTexture3D::load(int width, int height, int depth, QRgb *data)
 {
-    GLBUFFERS_ASSERT_OPENGL("GLTexture3D::load", glTexImage3D, return)
-
     glBindTexture(GL_TEXTURE_3D, m_texture);
     glTexImage3D(GL_TEXTURE_3D, 0, 4, width, height, depth, 0,
         GL_BGRA, GL_UNSIGNED_BYTE, data);
@@ -280,9 +276,6 @@ GLFrameBufferObject::GLFrameBufferObject(int width, int height)
     , m_height(height)
     , m_failed(false)
 {
-    GLBUFFERS_ASSERT_OPENGL("GLFrameBufferObject::GLFrameBufferObject",
-        glGenFramebuffersEXT && glGenRenderbuffersEXT && glBindRenderbufferEXT && glRenderbufferStorageEXT, return)
-
     // TODO: share depth buffers of same size
     glGenFramebuffersEXT(1, &m_fbo);
     //glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbo);
@@ -295,17 +288,12 @@ GLFrameBufferObject::GLFrameBufferObject(int width, int height)
 
 GLFrameBufferObject::~GLFrameBufferObject()
 {
-    GLBUFFERS_ASSERT_OPENGL("GLFrameBufferObject::~GLFrameBufferObject",
-        glDeleteFramebuffersEXT && glDeleteRenderbuffersEXT, return)
-
     glDeleteFramebuffersEXT(1, &m_fbo);
     glDeleteRenderbuffersEXT(1, &m_depthBuffer);
 }
 
 void GLFrameBufferObject::setAsRenderTarget(bool state)
 {
-    GLBUFFERS_ASSERT_OPENGL("GLFrameBufferObject::setAsRenderTarget", glBindFramebufferEXT, return)
-
     if (state) {
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbo);
         glPushAttrib(GL_VIEWPORT_BIT);
@@ -318,8 +306,6 @@ void GLFrameBufferObject::setAsRenderTarget(bool state)
 
 bool GLFrameBufferObject::isComplete()
 {
-    GLBUFFERS_ASSERT_OPENGL("GLFrameBufferObject::isComplete", glCheckFramebufferStatusEXT, return false)
-
     return GL_FRAMEBUFFER_COMPLETE_EXT == glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 }
 
@@ -335,9 +321,6 @@ GLRenderTargetCube::GLRenderTargetCube(int size)
 
 void GLRenderTargetCube::begin(int face)
 {
-    GLBUFFERS_ASSERT_OPENGL("GLRenderTargetCube::begin",
-        glFramebufferTexture2DEXT && glFramebufferRenderbufferEXT, return)
-
     m_fbo.setAsRenderTarget(true);
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
         GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, m_texture, 0);

@@ -34,17 +34,12 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-//#include <GL/glew.h>
-#include "glextensions.h"
-
 #include <QtWidgets>
 #include <QtOpenGL>
 
-//#include "roundedbox.h"
-#include "gltrianglemesh.h"
-//#include "trackball.h"
-#include "glbuffers.h"
-#include "qtbox.h"
+//#include "gltrianglemesh.h"
+//#include "glbuffers.h"
+//#include "qtbox.h"
 #include "dialogboxes.h"
 
 #define PI 3.14159265358979
@@ -64,11 +59,11 @@ public:
 
 public slots:
     void setShader(int index);                  // функция установки шейдеров на центральный куб, в параметрах индекс шейдера
-    void setTexture(int index);                 // функция установки тестур на центральный куб, в параметрах индекс текстуры
+    //void setTexture(int index);                 // функция установки тестур на центральный куб, в параметрах индекс текстуры
     void toggleDynamicCubemap(int state);                           // установка динамических текстур для объектов (включает отражение других объектов)
     void setColorParameter(const QString &name, QRgb color);        // установка цвета объетов, в параметрах - ??????
     void setFloatParameter(const QString &name, float value);       // установка цвета объетов, в параметрах - ??????
-    void newItem(ItemDialog::ItemType type);                    // рисуем статические объекты
+    //void newItem(ItemDialog::ItemType type);                    // рисуем статические объекты
 protected:
     void setStates();                                               //
     void setLights();                                               //
@@ -109,13 +104,13 @@ private:
     RenderOptionsDialog *m_renderOptions;       // окно параметров  (1 сторона)
     ItemDialog *m_itemDialog;                   // окно выбора новых объектов (2 сторона)
     QTimer *m_timer;                            // таймер анимации
-    QVector<GLTexture *> m_textures;            //
-    GLTexture3D *m_noise;                       //
-    QVector<GLRenderTargetCube *> m_cubemaps;   //  -- динамические текстуры для круга кубов
+    //QVector<GLTexture *> m_textures;            //
+    //GLTexture3D *m_noise;                       //
+    //QVector<GLRenderTargetCube *> m_cubemaps;   //  -- динамические текстуры для круга кубов
     QVector<QGLShaderProgram *> m_programs;     //
     QGLShader *m_vertexShader;                  // переменная текущего ??? шейдера
     QVector<QGLShader *> m_fragmentShaders;     //
-    GLTextureCube *m_environment;               // - фон - http://antongerdelan.net/opengl/cubemaps.html
+    //GLTextureCube *m_environment;               // - фон - http://antongerdelan.net/opengl/cubemaps.html
     QGLShader *m_environmentShader;             //
     QGLShaderProgram *m_environmentProgram;     //
 };

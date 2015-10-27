@@ -31,15 +31,13 @@
 **
 ****************************************************************************/
 
-//#include <GL/glew.h>
-#include "glextensions.h"
-
 #include "scene.h"
 
 #include <QtWidgets>
-#include <QGLWidget>
 #include <QOpenGLWidget>  //Это теперь пишем вместо QtWidgets
 #include <QSurfaceFormat> //Это теперь пишем вместо QGLFormat
+
+#include "oglw.h"
 
 class GraphicsView : public QGraphicsView
 {
@@ -52,52 +50,13 @@ public:
     }
 
 protected:
-    void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE {             // объявляем перекрывающую функцию и сразу пишем реализацию (и так тоже оказывается можно)
+    void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE {             // блокируем прорисовку сцены по умолчанию пока её нет // объявляем перекрывающую функцию и сразу пишем реализацию (и так тоже оказывается можно)
         if (scene())                                                    // если есть сцена, при изменении окна, то
             scene()->setSceneRect(QRect(QPoint(0, 0), event->size()));  // устанавливаем новый размер отсечения области рисования  (в котором располагается диалоговое окно, на саму сцену это не влияет)
         QGraphicsView::resizeEvent(event);                              // реализовываем перекрывающую функцию в классе (техника написания ...)
     }
 };
 
-/// Секция в которой определяем наличие всех необходимых нам расширений OpenGL
-/// Если писать по новому где CoreFunctions то этого не потребуется, там другие проверки.
-///
-inline bool matchString(const char *extensionString, const char *subString)
-{
-    int subStringLength = strlen(subString);
-    return (strncmp(extensionString, subString, subStringLength) == 0)
-        && ((extensionString[subStringLength] == ' ') || (extensionString[subStringLength] == '\0'));
-}
-
-bool necessaryExtensionsSupported()
-{
-    const char *extensionString = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
-    const char *p = extensionString;
-
-    const int GL_EXT_FBO = 1;
-    const int GL_ARB_VS = 2;
-    const int GL_ARB_FS = 4;
-    const int GL_ARB_SO = 8;
-    int extensions = 0;
-
-    while (*p) {
-        if (matchString(p, "GL_EXT_framebuffer_object"))
-            extensions |= GL_EXT_FBO;
-        else if (matchString(p, "GL_ARB_vertex_shader"))
-            extensions |= GL_ARB_VS;
-        else if (matchString(p, "GL_ARB_fragment_shader"))
-            extensions |= GL_ARB_FS;
-        else if (matchString(p, "GL_ARB_shader_objects"))
-            extensions |= GL_ARB_SO;
-        while ((*p != ' ') && (*p != '\0'))
-            ++p;
-        if (*p == ' ')
-            ++p;
-    }
-    return (extensions == 15);
-}
-///
-/// конец секции определения наличия расширений
 
 int main(int argc, char **argv)
 {
@@ -122,43 +81,16 @@ int main(int argc, char **argv)
 
     //**** новое
     // QOpenGLWidget ВСЕГДА отрисовывает в буфере, поэтому надо использовать буфер
-    QOpenGLWidget *widget = new QOpenGLWidget(0);  // пишем на новом классе
+    //QOpenGLWidget *widget = new QOpenGLWidget(0);  // пишем на новом классе
+    OGLW *widget = new OGLW();
     QSurfaceFormat format;
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
     format.setVersion(3, 0);
     format.setProfile(QSurfaceFormat::NoProfile);
     widget->setFormat(format); // must be called before the widget or its parent window gets shown//*/
-    //**** енд старое новое
-    widget->makeCurrent();
 
-/*
-    if (!necessaryExtensionsSupported()) {
-        QMessageBox::critical(0, "OpenGL features missing",
-            "The OpenGL extensions required to run this demo are missing.\n"
-            "The program will now exit.");
-        delete widget;
-        return -2;
-    }
 
-    // Check if all the necessary functions are resolved.
-    if (!getGLExtensionFunctions().resolve(widget->context())) {
-        QMessageBox::critical(0, "OpenGL features missing",
-            "Failed to resolve OpenGL functions required to run this demo.\n"
-            "The program will now exit.");
-        delete widget;
-        return -3;
-    }
-    /////////////////
-    //// Конец определения версии OpenGL
-    //**********************************/
-
-    /*// TODO: Make conditional for final release
-    QMessageBox::information(0, "For your information",
-        "This demo can be GPU and CPU intensive and may\n"
-        "work poorly or not at all on your system.");//*/
-
-    widget->makeCurrent(); // The current context must be set before calling Scene's constructor
     GraphicsView view;                          // создаём экземпляр дочернего класса (смотрим определение выше)
     view.setViewport(widget);
     view.setViewportUpdateMode(QGraphicsView::FullViewportUpdate);

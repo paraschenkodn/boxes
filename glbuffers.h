@@ -34,11 +34,9 @@
 #ifndef GLBUFFERS_H
 #define GLBUFFERS_H
 
-//#include <GL/glew.h>
-#include "glextensions.h"
-
 #include <QtWidgets>
 #include <QtOpenGL>
+#include "qopenglfunctions_3_0.h"
 
 #define BUFFER_OFFSET(i) ((char*)0 + (i))
 #define SIZE_OF_MEMBER(cls, member) sizeof(static_cast<cls *>(0)->member)
@@ -187,8 +185,6 @@ public:
         , m_buffer(0)
         , m_failed(false)
     {
-        GLBUFFERS_ASSERT_OPENGL("GLVertexBuffer::GLVertexBuffer", glGenBuffers && glBindBuffer && glBufferData, return)
-
         glGenBuffers(1, &m_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, m_buffer);
         glBufferData(GL_ARRAY_BUFFER, (m_length = length) * sizeof(T), data, mode);
@@ -196,15 +192,11 @@ public:
 
     ~GLVertexBuffer()
     {
-        GLBUFFERS_ASSERT_OPENGL("GLVertexBuffer::~GLVertexBuffer", glDeleteBuffers, return)
-
         glDeleteBuffers(1, &m_buffer);
     }
 
     void bind()
     {
-        GLBUFFERS_ASSERT_OPENGL("GLVertexBuffer::bind", glBindBuffer, return)
-
         glBindBuffer(GL_ARRAY_BUFFER, m_buffer);
         for (VertexDescription *desc = T::description; desc->field != VertexDescription::Null; ++desc) {
             switch (desc->field) {
@@ -232,8 +224,6 @@ public:
 
     void unbind()
     {
-        GLBUFFERS_ASSERT_OPENGL("GLVertexBuffer::unbind", glBindBuffer, return)
-
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         for (VertexDescription *desc = T::description; desc->field != VertexDescription::Null; ++desc) {
             switch (desc->field) {
@@ -259,8 +249,6 @@ public:
 
     T *lock()
     {
-        GLBUFFERS_ASSERT_OPENGL("GLVertexBuffer::lock", glBindBuffer && glMapBuffer, return 0)
-
         glBindBuffer(GL_ARRAY_BUFFER, m_buffer);
         //glBufferData(GL_ARRAY_BUFFER, m_length, NULL, m_mode);
         GLvoid* buffer = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
@@ -270,8 +258,6 @@ public:
 
     void unlock()
     {
-        GLBUFFERS_ASSERT_OPENGL("GLVertexBuffer::unlock", glBindBuffer && glUnmapBuffer, return)
-
         glBindBuffer(GL_ARRAY_BUFFER, m_buffer);
         glUnmapBuffer(GL_ARRAY_BUFFER);
     }
@@ -297,8 +283,6 @@ public:
         , m_buffer(0)
         , m_failed(false)
     {
-        GLBUFFERS_ASSERT_OPENGL("GLIndexBuffer::GLIndexBuffer", glGenBuffers && glBindBuffer && glBufferData, return)
-
         glGenBuffers(1, &m_buffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, (m_length = length) * sizeof(T), data, mode);
@@ -306,22 +290,16 @@ public:
 
     ~GLIndexBuffer()
     {
-        GLBUFFERS_ASSERT_OPENGL("GLIndexBuffer::~GLIndexBuffer", glDeleteBuffers, return)
-
         glDeleteBuffers(1, &m_buffer);
     }
 
     void bind()
     {
-        GLBUFFERS_ASSERT_OPENGL("GLIndexBuffer::bind", glBindBuffer, return)
-
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffer);
     }
 
     void unbind()
     {
-        GLBUFFERS_ASSERT_OPENGL("GLIndexBuffer::unbind", glBindBuffer, return)
-
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
@@ -329,8 +307,6 @@ public:
 
     T *lock()
     {
-        GLBUFFERS_ASSERT_OPENGL("GLIndexBuffer::lock", glBindBuffer && glMapBuffer, return 0)
-
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffer);
         GLvoid* buffer = glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_READ_WRITE);
         m_failed = (buffer == 0);
@@ -339,8 +315,6 @@ public:
 
     void unlock()
     {
-        GLBUFFERS_ASSERT_OPENGL("GLIndexBuffer::unlock", glBindBuffer && glUnmapBuffer, return)
-
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffer);
         glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
     }

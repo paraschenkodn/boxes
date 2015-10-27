@@ -6,7 +6,6 @@
 
 #include <QtWidgets>
 #include <QtOpenGL>
-#include "glextensions.h"
 
 // класс не имеющий отношения к отображению объектов
 class ParameterEdit : public QWidget

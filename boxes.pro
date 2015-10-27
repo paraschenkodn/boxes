@@ -3,19 +3,14 @@ QT += opengl widgets
 contains(QT_CONFIG, opengles.|angle|dynamicgl):error("This example requires Qt to be configured with -opengl desktop")
 
 HEADERS += \
-           glbuffers.h \
-           glextensions.h \
-           gltrianglemesh.h \
-           qtbox.h \
            scene.h \
+    oglw.h \
     dialogboxes.h
 SOURCES += \
-           glbuffers.cpp \
-           glextensions.cpp \
            main.cpp \
-           qtbox.cpp \
            scene.cpp \
-    dialogboxes.cpp
+    dialogboxes.cpp \
+    oglw.cpp
 
 RESOURCES += boxes.qrc
 

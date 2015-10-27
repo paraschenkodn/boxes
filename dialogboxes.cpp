@@ -219,7 +219,7 @@ RenderOptionsDialog::RenderOptionsDialog()
     QCheckBox *check = new QCheckBox(tr("Dynamic cube map"));
     check->setCheckState(Qt::Unchecked);
     // Dynamic cube maps are only enabled when multi-texturing and render to texture are available.
-    check->setEnabled(glActiveTexture && glGenFramebuffersEXT);
+    //check->setEnabled(glActiveTexture && glGenFramebuffersEXT);
     connect(check, SIGNAL(stateChanged(int)), this, SIGNAL(dynamicCubemapToggled(int)));
     layout->addWidget(check, 0, 0, 1, 2);
     ++row;

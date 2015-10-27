@@ -104,12 +104,12 @@ Scene::Scene(int width, int height, int maxTextureSize)
     connect(m_renderOptions, SIGNAL(dynamicCubemapToggled(int)), this, SLOT(toggleDynamicCubemap(int)));                    //
     connect(m_renderOptions, SIGNAL(colorParameterChanged(QString,QRgb)), this, SLOT(setColorParameter(QString,QRgb)));
     connect(m_renderOptions, SIGNAL(floatParameterChanged(QString,float)), this, SLOT(setFloatParameter(QString,float)));
-    connect(m_renderOptions, SIGNAL(textureChanged(int)), this, SLOT(setTexture(int)));
+    //connect(m_renderOptions, SIGNAL(textureChanged(int)), this, SLOT(setTexture(int)));
     connect(m_renderOptions, SIGNAL(shaderChanged(int)), this, SLOT(setShader(int)));
 
     // создаём панель управления №2, которая также общается посредством сигналов
     m_itemDialog = new ItemDialog;
-    connect(m_itemDialog, SIGNAL(newItemTriggered(ItemDialog::ItemType)), this, SLOT(newItem(ItemDialog::ItemType)));
+    //connect(m_itemDialog, SIGNAL(newItemTriggered(ItemDialog::ItemType)), this, SLOT(newItem(ItemDialog::ItemType)));
 
     // формируем двухсторонний виджет панели управления
     TwoSidedGraphicsWidget *twoSided = new TwoSidedGraphicsWidget(this);
